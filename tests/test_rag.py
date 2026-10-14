@@ -80,3 +80,56 @@ def test_vector_store_upserts_chunks_without_duplicates(tmp_path):
 
     assert first_count == 1
     assert second_count == 1
+def test_end_to_end_pdf_index_retrieval_and_citation(tmp_path):
+    from pathlib import Path
+    from pypdf import PdfWriter
+    from pypdf.generic import (
+        DictionaryObject,
+        DecodedStreamObject,
+        NameObject,
+    )
+    from agents.rag.indexer import index_pdf
+    from agents.rag.retriever import retrieve_clauses
+
+    pdf_path = tmp_path / "synthetic_test.pdf"
+    db_path = str(tmp_path / "chroma_db")
+
+    writer = PdfWriter()
+    page = writer.add_blank_page(width=612, height=792)
+
+    font = DictionaryObject()
+    font.update({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    fonts = DictionaryObject()
+    fonts[NameObject("/F1")] = writer._add_object(font)
+    resources = DictionaryObject()
+    resources[NameObject("/Font")] = fonts
+    page[NameObject("/Resources")] = resources
+
+    stream = DecodedStreamObject()
+    stream.set_data(
+        b"BT /F1 12 Tf 72 720 Td "
+        b"(Synthetic test passage about setbacks and road width.) Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(stream)
+
+    with pdf_path.open("wb") as file:
+        writer.write(file)
+
+    indexed = index_pdf(str(pdf_path), db_path)
+    assert indexed["pages_extracted"] == 1
+    assert indexed["chunks_created"] == 1
+
+    results = retrieve_clauses(
+        "setbacks and road width",
+        db_path,
+        3,
+    )
+
+    assert results
+    assert "Synthetic test passage" in results[0]["text"]
+    assert results[0]["source"] == "synthetic_test.pdf"
+    assert results[0]["page"] == 1

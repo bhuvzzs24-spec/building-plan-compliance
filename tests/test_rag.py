@@ -156,3 +156,46 @@ def test_reindexing_removes_stale_chunks(tmp_path):
     assert count == 1
     assert collection.count() == 1
     assert collection.get()["documents"] == ["Updated single chunk."]
+def test_retriever_returns_empty_for_empty_collection(tmp_path):
+    import chromadb
+    from agents.rag.retriever import retrieve_clauses
+
+    db_path = str(tmp_path / "empty_db")
+    client = chromadb.PersistentClient(path=db_path)
+    client.get_or_create_collection("building_bye_laws")
+
+    results = retrieve_clauses(
+        "What are the building setback rules?",
+        db_path,
+        3,
+    )
+
+    assert results == []
+
+
+def test_retrieved_clauses_include_source_and_page(tmp_path):
+    from agents.rag.vector_store import build_vector_store
+    from agents.rag.retriever import retrieve_clauses
+
+    db_path = str(tmp_path / "citation_db")
+    build_vector_store(
+        [
+            {
+                "source": "official_test.pdf",
+                "page": 7,
+                "text": "Setback requirements are described in this test passage.",
+            }
+        ],
+        db_path,
+    )
+
+    results = retrieve_clauses(
+        "setback requirements",
+        db_path,
+        1,
+    )
+
+    assert results
+    assert results[0]["source"] == "official_test.pdf"
+    assert results[0]["page"] == 7
+    assert results[0]["text"]

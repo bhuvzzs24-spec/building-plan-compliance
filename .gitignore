@@ -10,3 +10,4 @@ data/chroma_test/
 # Local building regulation PDFs
 data/bye_laws/*.pdf
 data/chroma_validation_test/
+data/nonexistent_test_db/

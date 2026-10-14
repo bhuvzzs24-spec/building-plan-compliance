@@ -1,3 +1,6 @@
+import pytest
+
+from agents.rag.pdf_loader import load_pdf
 
 from agents.rag.text_chunker import chunk_pages
 from agents.rag.retriever import retrieve_clauses
@@ -41,3 +44,21 @@ def test_retriever_rejects_zero_top_k():
         assert "top_k must be at least 1" in str(exc)
     else:
         raise AssertionError("top_k=0 should be rejected")
+
+
+
+
+def test_loader_rejects_missing_pdf(tmp_path):
+    missing_pdf = tmp_path / "missing.pdf"
+
+    with pytest.raises(FileNotFoundError):
+        load_pdf(str(missing_pdf))
+
+
+def test_loader_rejects_non_pdf_file(tmp_path):
+    text_file = tmp_path / "rules.txt"
+    text_file.write_text("Synthetic test content", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="must be a PDF"):
+        load_pdf(str(text_file))
+

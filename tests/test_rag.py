@@ -1,5 +1,5 @@
 import pytest
-
+from agents.rag.vector_store import build_vector_store
 from agents.rag.pdf_loader import load_pdf
 
 from agents.rag.text_chunker import chunk_pages
@@ -62,3 +62,21 @@ def test_loader_rejects_non_pdf_file(tmp_path):
     with pytest.raises(ValueError, match="must be a PDF"):
         load_pdf(str(text_file))
 
+
+
+
+def test_vector_store_upserts_chunks_without_duplicates(tmp_path):
+    db_path = str(tmp_path / "chroma_db")
+    chunks = [
+        {
+            "source": "synthetic_test.pdf",
+            "page": 1,
+            "text": "Synthetic passage about setbacks and road width."
+        }
+    ]
+
+    first_count = build_vector_store(chunks, db_path)
+    second_count = build_vector_store(chunks, db_path)
+
+    assert first_count == 1
+    assert second_count == 1

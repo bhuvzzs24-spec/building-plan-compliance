@@ -1,0 +1,11 @@
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Local Chroma vector databases
+data/chroma_db/
+data/chroma_test/
+
+# Local building regulation PDFs
+data/bye_laws/*.pdf

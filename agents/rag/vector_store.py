@@ -9,7 +9,6 @@ def build_vector_store(
     persist_dir: str = "data/chroma_db",
 ) -> int:
     """Store text chunks and their source/page metadata in Chroma."""
-
     if not chunks:
         raise ValueError("No text chunks provided to index.")
 
@@ -21,7 +20,6 @@ def build_vector_store(
         name="building_bye_laws"
     )
 
-    # Deterministic IDs make repeated indexing of the same chunks stable.
     ids = []
     documents = []
     metadatas = []
@@ -44,6 +42,12 @@ def build_vector_store(
 
     if not documents:
         raise ValueError("All supplied chunks were empty.")
+
+    # Remove old chunks for these sources before inserting the current
+    # version. This prevents obsolete chunks remaining after re-indexing.
+    sources = sorted({metadata["source"] for metadata in metadatas})
+    for source in sources:
+        collection.delete(where={"source": source})
 
     collection.upsert(
         ids=ids,

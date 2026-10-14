@@ -133,3 +133,26 @@ def test_end_to_end_pdf_index_retrieval_and_citation(tmp_path):
     assert "Synthetic test passage" in results[0]["text"]
     assert results[0]["source"] == "synthetic_test.pdf"
     assert results[0]["page"] == 1
+def test_reindexing_removes_stale_chunks(tmp_path):
+    from agents.rag.vector_store import build_vector_store
+    import chromadb
+
+    db_path = str(tmp_path / "chroma_db")
+
+    original = [
+        {"source": "changing.pdf", "page": 1, "text": "First old chunk."},
+        {"source": "changing.pdf", "page": 1, "text": "Second old chunk."},
+    ]
+    updated = [
+        {"source": "changing.pdf", "page": 1, "text": "Updated single chunk."},
+    ]
+
+    build_vector_store(original, db_path)
+    count = build_vector_store(updated, db_path)
+
+    client = chromadb.PersistentClient(path=db_path)
+    collection = client.get_collection("building_bye_laws")
+
+    assert count == 1
+    assert collection.count() == 1
+    assert collection.get()["documents"] == ["Updated single chunk."]

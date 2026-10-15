@@ -1,0 +1,11 @@
+Sloka - Building Bye-Laws and RAG
+
+1. PDF ingestion and page extraction - Implemented
+2. Text chunking with source/page metadata - Implemented
+3. Chroma vector indexing - Implemented
+4. Clause retrieval with source/page citations - Implemented
+5. Repeatable indexing and stale chunk removal - Tested
+6. Automated tests - 10 passed
+7. GitHub sync - main matches origin/main
+
+PENDING: Verify the PDF issuing authority, version, and exact official setback, FAR, height, plot-area, road-width and ground-coverage rules.
